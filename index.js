@@ -6,7 +6,10 @@ const { loadCommands } = require('./utils/commandLoader');
 const { initDatabase } = require('./database/db');
 
 const client = new Client({
-    authStrategy: new LocalAuth()
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        args: ['--no-sandbox'],
+    }
 });
 
 const commands = loadCommands();
@@ -20,17 +23,17 @@ client.on('ready', () => {
     initDatabase();
 });
 
-client.on('message', async msg => {
+client.on('message_create', async msg => {
     if (msg.body.startsWith('!')) {
         const args = msg.body.slice(1).trim().split(/ +/);
         const command = args.shift().toLowerCase();
 
         if (commands.has(command)) {
             try {
-                commands.get(command).execute(client, msg, args);
+                await commands.get(command).execute(client, msg, args);
             } catch (error) {
                 console.error(error);
-                msg.reply('There was an error executing that command.');
+                await msg.reply('There was an error executing that command.');
             }
         }
     }
